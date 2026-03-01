@@ -16,15 +16,16 @@ static const char *TAG = "LABO3";
 // ADC channels
 #define LIGHT_SENSOR_CHANNEL ADC_CHANNEL_0   // Light sensor input
 
-// Light threshold - adjust this value based on your sensor
-#define LIGHT_THRESHOLD 1500  // When light value is below this, LED turns on
+// Fixed threshold settings (no potentiometer)
+#define DARK_THRESHOLD 2048
+#define THRESHOLD_BAND 150
 
 // Update interval in milliseconds
 #define UPDATE_INTERVAL 500
 
 // Global variables
 int g_light_value = 0;
-int g_led_state = 0;
+int g_threshold_value = DARK_THRESHOLD;
 
 void gpio_setup(void)
 {
@@ -43,7 +44,7 @@ void gpio_setup(void)
 
 void adc_setup(void)
 {
-    // Initialize light sensor ADC channel
+    // Initialize only the light sensor channel
     myADC_setup(LIGHT_SENSOR_CHANNEL);
     
     ESP_LOGI(TAG, "ADC initialization complete");
@@ -56,21 +57,26 @@ void monitor_light_task(void *pvParameter)
     while (1) {
         // Read light sensor value
         g_light_value = myADC_getValue(LIGHT_SENSOR_CHANNEL);
-        
-        // Control main LED: turn on if light value is LESS than threshold
-        // (lower light value = darker = turn on LED)
-        if (g_light_value < LIGHT_THRESHOLD) {
+
+        if (g_light_value < (g_threshold_value - THRESHOLD_BAND)) {
+            // Too dark
             gpio_set_level(LED_MAIN, 1);
-            g_led_state = 1;
-        } else {
+            gpio_set_level(LED_THRESHOLD_PIN, 0);
+            gpio_set_level(LED_TOO_HIGH_PIN, 0);
+        } else if (g_light_value > (g_threshold_value + THRESHOLD_BAND)) {
+            // Too bright
             gpio_set_level(LED_MAIN, 0);
-            g_led_state = 0;
+            gpio_set_level(LED_THRESHOLD_PIN, 0);
+            gpio_set_level(LED_TOO_HIGH_PIN, 1);
+        } else {
+            // Around threshold
+            gpio_set_level(LED_MAIN, 0);
+            gpio_set_level(LED_THRESHOLD_PIN, 1);
+            gpio_set_level(LED_TOO_HIGH_PIN, 0);
         }
         
         // Log the values for debugging
-        ESP_LOGI(TAG, "Light: %d, Threshold: %d, LED: %s", 
-                 g_light_value, LIGHT_THRESHOLD, 
-                 g_led_state ? "ON" : "OFF");
+        ESP_LOGI(TAG, "Light: %d, Threshold: %d", g_light_value, g_threshold_value);
         
         vTaskDelay(UPDATE_INTERVAL / portTICK_PERIOD_MS);
     }

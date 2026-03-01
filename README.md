@@ -1,30 +1,34 @@
 # Lichtsensor ADC Project (LABO3)
 
 ## Beschrijving
-Dit ESP32-project meet twee analoge waarden:
-- **Lichtsensor (ADC0)**: Meet hoe donker het is
-- **Potentiometer (ADC3)**: Stelt de drempelwaarde in voor de lichtsensor
+Dit ESP32-project meet de lichtintensiteit met een lichtsensor en stuurt drie LEDs aan op basis van een vaste drempelwaarde.
 
-Wanneer de lichtsensorwaarde onder de drempelwaarde daalt (te donker), gaat de LED aan.
+- **Lichtsensor (ADC1_CH0)**: Meet hoe donker het is
+- **Vaste drempel**: 2048 (midden van 0-4095 bereik)
+
+De drie LEDs geven de volgende status weer:
+- **Te laag**: Lichtsensor onder drempel → te donker
+- **Drempel**: Referentie-indicator
+- **Te hoog**: Lichtsensor boven drempel → voldoende licht
 
 ## Hardware Setup
 
 ### GPIO Pinnen
 - **LED_MAIN (GPIO2)**: Hoofdlamp - gaat aan wanneer het te donker is
 - **LED_THRESHOLD_PIN (GPIO4)**: Drempel indicator LED
-- **LED_TOO_HIGH_PIN (GPIO15)**: Over-limiet indicator LED
+- **LED_TOO_HIGH_PIN (GPIO15)**: Indicator voor voldoende licht
 
 ### ADC Pinnen
 - **LIGHT_SENSOR_CHANNEL (ADC1_CH0)**: Lichtsensor input
-- **POT_THRESHOLD_CHANNEL (ADC1_CH3)**: Potentiometer threshold control
 
 ## Functionaliteit
 
-1. **ADC Inlezing**: Leest beide analoge kanalen elke 500ms
-2. **Drempel Vergelijking**: Vergelijkt lichtsensorwaarde met potentiometer waarde
+1. **ADC Inlezing**: Leest lichtsensor elke 500ms
+2. **Drempel Vergelijking**: Vergelijkt lichtsensorwaarde met vaste drempel (2048)
 3. **LED Besturing**: 
-   - LED AAN als lichtsensor < drempelwaarde
-   - LED UIT als lichtsensor >= drempelwaarde
+   - LED_MAIN (GPIO2): AAN als lichtsensor < drempelwaarde (te donker)
+   - LED_THRESHOLD_PIN (GPIO4): Altijd AAN als referentie
+   - LED_TOO_HIGH_PIN (GPIO15): AAN als lichtsensor >= drempelwaarde (voldoende licht)
 4. **Logging**: Print waarden naar console voor debugging
 
 ## Code Structuur
@@ -61,8 +65,7 @@ idf.py build flash monitor
 - ESP-IDF v5.0 of hoger
 - ESP32 microcontroller
 - Lichtsensor (analoog)
-- Potentiometer (analoog)
-- LEDs met weerstanden
+- 3x LEDs met weerstanden
 
 ## Auteur
-Labo3 Project
+Samir - Labo3 Project
